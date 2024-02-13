@@ -12,25 +12,30 @@ const dbo = require("../db/conn");
 const ObjectId = require("mongodb").ObjectId;
 
 // This section will help you get a list of all the records.
-recordRoutes.route("/record").get(function (req, res) {
-  let db_connect = dbo.getDb("employees");
-  db_connect
-    .collection("records")
-    .find({})
-    .toArray(function (err, result) {
-      if (err) throw err;
-      res.json(result);
-    });
+recordRoutes.route("/record").get(async function (req, res) {
+  try {
+    const db = await dbo.getDb();
+    const records = await db.collection("records").find({}).toArray();
+    res.json(records);
+  } catch (error) {
+    res.status(500).json({ message: "Internal server error", error: error });
+  }
 });
 
 // This section will help you get a single record by id
-recordRoutes.route("/record/:id").get(function (req, res) {
-  let db_connect = dbo.getDb();
-  let myquery = { _id: ObjectId(req.params.id) };
-  db_connect.collection("records").findOne(myquery, function (err, result) {
-    if (err) throw err;
-    res.json(result);
-  });
+recordRoutes.route("/record/:id").get(async function (req, res) {
+  try {
+    const db = await dbo.getDb();
+    const myquery = { _id: ObjectId(req.params.id) };
+    const record = await db.collection("records").findOne(myquery);
+    if (!record) {
+      res.status(404).json({ message: "Record not found" });
+      return;
+    }
+    res.json(record);
+  } catch (error) {
+    res.status(500).json({ message: "Internal server error", error: error });
+  }
 });
 
 // This section will help you create a new record.
